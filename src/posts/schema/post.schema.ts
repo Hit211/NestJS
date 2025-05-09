@@ -10,8 +10,8 @@ export class Post{
     @Prop({reuqired:true})
     content:string
 
-    @Prop({required:true})
-    authorName:string
+    @Prop({type:mongoose.Schema.Types.ObjectId,ref:'User',required:true})
+    authorName:mongoose.Types.ObjectId;
 }
 
 export type PostDocument = Post & Document;

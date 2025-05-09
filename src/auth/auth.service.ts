@@ -22,7 +22,7 @@ export class AuthService {
 
         const newuser = this.userModel.create({
             email:user.email,
-            password:hashedPassword,
+            password:hashedPassword,    
             name:user.name,
             role:UserRole.USER
         })
@@ -38,7 +38,8 @@ export class AuthService {
 
     
     async createAdmin(user:registerDto){
-        const existingAdmin = await this.userModel.findOne({email:user.email})
+        try {
+            const existingAdmin = await this.userModel.findOne({email:user.email})
         if(existingAdmin){
             throw new ConflictException("Admin is already exists")
         }
@@ -57,6 +58,10 @@ export class AuthService {
         return {
             admin:safeAdmin,
             message:"Admin Created"
+        }
+        } catch (error) {
+          console.log("error occured during create admin",error.message);
+             
         }
     }
 
@@ -81,6 +86,22 @@ export class AuthService {
         }
     }
 
+
+    async currentUserById(id:string){
+        const user = await this.userModel.findOne({id:id})
+        if(!user){
+            throw new UnauthorizedException("user not found")
+        }
+
+        const {password,...result} = user;
+        
+        return result;
+    }
+
+    async getAllUsers(){
+        const users = await this.userModel.find();
+        return users;
+    }
 
     async refreshToken(refreshtoken:string){
         try {

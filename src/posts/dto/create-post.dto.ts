@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
+import { Types } from "mongoose";
 
 export class CreateDTO{
    
@@ -16,9 +17,6 @@ export class CreateDTO{
 
 
     @IsNotEmpty()
-    @IsString()
-    @MinLength(3)
-    @MaxLength(50)
-    authorName:string;
+    authorName:Types.ObjectId;
 }
 
