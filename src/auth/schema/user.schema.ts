@@ -21,6 +21,9 @@ export class User{
     
     @Prop({type:[{type:Types.ObjectId, ref:'Post'}]})
     posts:Types.ObjectId[];
+
+    @Prop({default:false})
+    isBlocked:boolean;
 }
 
 export type UserDocument = User & Document;

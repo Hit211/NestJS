@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongoLoggerService } from './posts/mongodb/mongo-logger.service';
 import { AuthModule } from './auth/auth.module';
+// import { RSocketModule } from './auth/rsocket/rsocket.module';
 
 @Module({
   imports: [
@@ -30,6 +31,8 @@ import { AuthModule } from './auth/auth.module';
     }),
     PostsModule,
     AuthModule,
+    // RSocketModule
+    
   ],
   controllers: [AppController],
   providers: [AppService, MongoLoggerService],

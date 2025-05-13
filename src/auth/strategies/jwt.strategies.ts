@@ -16,8 +16,8 @@ export class JwtStrategy extends PassportStrategy(Strategy){
    async validate(payload: any) {
        try {       
         const userDoc = await this.authService.currentUserById(payload.sub);
-        if(!userDoc){
-            throw new UnauthorizedException("User not found")
+        if(!userDoc || userDoc.isBlocked){
+            throw new UnauthorizedException("User is blocked")
         }
         const user = userDoc.toObject;
 

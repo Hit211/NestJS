@@ -6,10 +6,15 @@ import { registerDto } from './dto/register.dto';
 import * as bcrypt from "bcrypt"
 import { loginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { SocketGateway } from 'src/socket/socket.gateway';
+// import { RSocketService } from './rsocket/rsocket.service';
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel('User') private readonly userModel:Model<UserDocument>,private jwtService:JwtService){}
+    constructor(@InjectModel('User') private readonly userModel:Model<UserDocument>,private jwtService:JwtService,
+    //  private readonly rsocketService: RSocketService
+    private readonly socketGateway: SocketGateway
+    ){}
 
     async createUser(user:registerDto){
         const existingUser = await this.userModel.findOne({email:user.email});
@@ -77,6 +82,9 @@ export class AuthService {
             throw new ConflictException("Password is invalid")
         }
 
+        if(existingUser.isBlocked){
+            throw new UnauthorizedException("User is blocked")
+        }
         const tokens = await this.generateToken(existingUser);
         const {password,...result} = existingUser;
 
@@ -98,9 +106,9 @@ export class AuthService {
         return result;
     }
 
-    async getAllUsers(){
-        const users = await this.userModel.find();
-        return users;
+    async getAllUsers(includedBlocked:boolean){
+        if(includedBlocked) return await this.userModel.find();
+        return await this.userModel.find({isBlocked:false});       
     }
 
     async refreshToken(refreshtoken:string){
@@ -121,6 +129,48 @@ export class AuthService {
             return accessToken;
         } catch (error) {
             throw new UnauthorizedException('Invalid Token')
+        }
+    }
+
+    async deleteUser(id:string){
+        try {
+            console.log("userId;",id);
+            
+           const user = await this.userModel.findByIdAndDelete(id);
+           if (!user) {
+            throw new Error('User not found');
+          }
+           console.log("user successfully deleted");
+           
+           return user;
+        } catch (error) {
+            console.log("Error in deleteion",error.message); 
+            throw new Error("User deletion failed");          
+        }
+    }
+
+    async blockUser(id:string,shouldBlock:boolean){
+        try {
+            const user = await this.userModel.findByIdAndUpdate(id,{isBlocked:shouldBlock},{new:true});
+            if(!user){
+                throw new Error("User Not Found")
+            }
+
+
+    //   if (shouldBlock) {
+    //     this.rsocketService.broadcastUserBlocked('6822db90cfbb5dcde8f1b9c3');
+    //   }
+
+         if(shouldBlock){
+            this.socketGateway.blockUser(id);
+         } else{
+            this.socketGateway.notifyUserUnbloked(id);
+         }
+           
+            return {message:shouldBlock?'User Blocked': 'User unblocked',user}
+        } catch (error) {
+            console.log("error occur during blocking user",error);
+            throw new Error("failed to block user")
         }
     }
     
